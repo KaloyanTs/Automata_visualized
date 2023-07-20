@@ -60,7 +60,7 @@ function buildAutomata() {
     getAlpha();
     var lines = deltaInput.value.split("\n");
     A.states = new Map();
-    A.indexToState=[];
+    A.indexToState = [];
     var stateIndex = 0;
     for (let i = 0; i < lines.length; i++) {
         lines[i] = lines[i].split("-");
@@ -112,7 +112,12 @@ document.getElementById("build").onclick = buildAutomata;
 
 document.getElementById("check").onclick = getAlpha;
 
-pArray = [];
+// geometry functions -------------------------------------------------------------------------------------------
+
+function rotateVector(v, angle) {
+    var aux = [Math.cos(angle), Math.sin(angle)];
+    return [v[0] * aux[0] - v[1] * aux[1], v[0] * aux[1] + v[1] * aux[0]];
+}
 
 function distance2D(A, B) {
     return Math.sqrt((A[0] - B[0]) * (A[0] - B[0]) + (A[1] - B[1]) * (A[1] - B[1]));
@@ -122,14 +127,9 @@ function getRandomInt(from, to) {
     return Math.floor(Math.random() * (to - from + 1)) + from;
 }
 
-function generatePoints() {
-    pArray = [];
-    for (let index = 0; index < count; index++) {
-        const element = new Point(getRandomInt(-400, 400), getRandomInt(-200, 200));
-        pArray.push(element);
-    }
-    pArray.sort(function (a, b) { return a.x - b.x });
-}
+//end of geometries ---------------------------------------------------------------------------------------------
+
+// drawing functions --------------------------------------------------------------------------------------------
 
 function drawScene() {
     if (typeof A.states === 'undefined' || A.states.length == 0) { alert("automata not built yet...\nsome error should be fixed..."); return; }
@@ -143,7 +143,7 @@ function drawScene() {
     }
     for (let i = 0; i < A.delta.length; i++) {
         for (let j = 0; j < A.delta[i].length; j++) {
-            drawTransition(A.indexToState[i],A.indexToState[A.delta[i][j]],A.indexToLetter[j]);
+            drawTransition(A.indexToState[i], A.indexToState[A.delta[i][j]], A.indexToLetter[j]);
             //todo letter badly working
         }
     }
@@ -165,10 +165,17 @@ function drawTransition(from, to, letter) {
     var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 50) / 2;
     var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 50) / 2;
     var toPosY = h / 2 - A.positions.get(to)[1] * (Math.min(w, h) - 50) / 2;
-    drawArrow(ctx, fromPosX, fromPosY, toPosX, toPosY, 0.97);
+    var dir = [toPosX - fromPosX, toPosY - fromPosY];
+    var len = distance2D([0, 0], dir);
+    dir[0] = dir[0] / len * 20;
+    dir[1] = dir[1] / len * 20;
+    var dirRotPlus = rotateVector(dir, Math.PI / 6);
+    var dirRotMinus = rotateVector(dir, -Math.PI / 6);
+    drawArrow(ctx, fromPosX + dirRotMinus[0], fromPosY + dirRotMinus[1], toPosX - dirRotPlus[0], toPosY - dirRotPlus[1], 0.97);
     ctx.textAlign = "center";
     ctx.textBaseline = 'middle';
-    ctx.fillText(letter, (fromPosX+toPosX)/2, (fromPosY+toPosY)/2-10);
+    ctx.fillText(letter, (fromPosX + toPosX + dirRotMinus[0] - dirRotPlus[0]) / 2 + dir[1] / 2,
+        (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
     //todo adjust text to not be hidden by arrow
 }
 
@@ -196,3 +203,5 @@ const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
 };
 
 drawState("state1", .5, .5);
+
+//end of drawing functions -----------------------------------------------------------------------------------------
