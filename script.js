@@ -19,6 +19,7 @@ class Automaton {
         this.positions = undefined;
         this.indexToLetter = undefined;
         this.indexToState = undefined;
+        this.activeTransition = undefined;
     }
 }
 
@@ -92,7 +93,6 @@ function buildAutomata() {
 
     var ruleCount = 0;
     for (const line of lines) {
-        console.log(line);
         if (typeof A.delta[A.states.get(line[0])][A.alpha.get(line[2])] === 'undefined') ++ruleCount;
         A.delta[A.states.get(line[0])][A.alpha.get(line[2])] = A.states.get(line[1]);
         //todo remove console.log("set " + line[0] + "->" + line[2] + "to " + A.delta[A.states.get(line[0])][A.alpha.get(line[2])])
@@ -151,8 +151,8 @@ function drawScene() {
 
 function drawState(name, posX, posY) {
     ctx.beginPath();
-    posX = w / 2 + posX * (Math.min(w, h) - 50) / 2;
-    posY = h / 2 - posY * (Math.min(w, h) - 50) / 2;
+    posX = w / 2 + posX * (Math.min(w, h) - 80) / 2;
+    posY = h / 2 - posY * (Math.min(w, h) - 80) / 2;
     ctx.arc(posX, posY, 20, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.textAlign = "center";
@@ -161,10 +161,24 @@ function drawState(name, posX, posY) {
 }
 
 function drawTransition(from, to, letter) {
-    var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 50) / 2;
-    var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 50) / 2;
-    var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 50) / 2;
-    var toPosY = h / 2 - A.positions.get(to)[1] * (Math.min(w, h) - 50) / 2;
+    if (A.activeTransition == [from, letter]) { ctx.strokeStyle = "red"; }
+    if (from == to) {
+        const pos = A.positions.get(from);
+        var fromPosX = w / 2 + pos[0] * (Math.min(w, h) - 80) / 2;
+        var fromPosY = h / 2 - pos[1] * (Math.min(w, h) - 80) / 2;
+        var scaled = [pos[0] * 20, pos[1] * 20];
+        ctx.beginPath();
+        ctx.arc(fromPosX + scaled[0], fromPosY - scaled[1], 20, 0, 2 * Math.PI);
+        //todo a lot of calculations
+        // check cases by starting end ending angle
+        ctx.stroke();
+        console.log(fromPosX, fromPosY);
+        return;
+    }
+    var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 80) / 2;
+    var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 80) / 2;
+    var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 80) / 2;
+    var toPosY = h / 2 - A.positions.get(to)[1] * (Math.min(w, h) - 80) / 2;
     var dir = [toPosX - fromPosX, toPosY - fromPosY];
     var len = distance2D([0, 0], dir);
     dir[0] = dir[0] / len * 20;
@@ -176,7 +190,8 @@ function drawTransition(from, to, letter) {
     ctx.textBaseline = 'middle';
     ctx.fillText(letter, (fromPosX + toPosX + dirRotMinus[0] - dirRotPlus[0]) / 2 + dir[1] / 2,
         (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
-    //todo adjust text to not be hidden by arrow
+    
+    ctx.strokeStyle='black';
 }
 
 const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
