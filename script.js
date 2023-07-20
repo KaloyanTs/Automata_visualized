@@ -17,6 +17,8 @@ class Automaton {
         this.delta = undefined;
         this.alpha = undefined;
         this.positions = undefined;
+        this.indexToLetter = undefined;
+        this.indexToState = undefined;
     }
 }
 
@@ -44,9 +46,11 @@ function getAlpha() {
     }
     A.alpha = new Map();
     var letterCount = 0;
+    A.indexToLetter = [];
     for (l of alpha) {
         if (!A.alpha.has(l)) {
             A.alpha.set(l, letterCount);
+            A.indexToLetter.push(l);
             ++letterCount;
         }
     }
@@ -56,6 +60,7 @@ function buildAutomata() {
     getAlpha();
     var lines = deltaInput.value.split("\n");
     A.states = new Map();
+    A.indexToState=[];
     var stateIndex = 0;
     for (let i = 0; i < lines.length; i++) {
         lines[i] = lines[i].split("-");
@@ -65,6 +70,7 @@ function buildAutomata() {
             if (j < 2) {
                 if (!A.states.has(lines[i][j])) {
                     A.states.set(lines[i][j], stateIndex);
+                    A.indexToState.push(lines[i][j]);
                     ++stateIndex;
                 }
             }
@@ -135,6 +141,12 @@ function drawScene() {
         drawState(state[0], pos[0], pos[1]);
         ++i;
     }
+    for (let i = 0; i < A.delta.length; i++) {
+        for (let j = 0; j < A.delta[i].length; j++) {
+            drawTransition(A.indexToState[i],A.indexToState[A.delta[i][j]],A.indexToLetter[j]);
+            //todo letter badly working
+        }
+    }
 }
 
 function drawState(name, posX, posY) {
@@ -148,10 +160,39 @@ function drawState(name, posX, posY) {
     ctx.fillText(name, posX, posY);
 }
 
-function drawTransition(from, to, letter)
-{
-    return;
-    //todo 
+function drawTransition(from, to, letter) {
+    var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 50) / 2;
+    var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 50) / 2;
+    var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 50) / 2;
+    var toPosY = h / 2 - A.positions.get(to)[1] * (Math.min(w, h) - 50) / 2;
+    drawArrow(ctx, fromPosX, fromPosY, toPosX, toPosY, 0.97);
+    ctx.textAlign = "center";
+    ctx.textBaseline = 'middle';
+    ctx.fillText(letter, (fromPosX+toPosX)/2, (fromPosY+toPosY)/2-10);
+    //todo adjust text to not be hidden by arrow
 }
+
+const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
+    const arrow = {
+        dx: x2 - x1,
+        dy: y2 - y1
+    };
+    const middle = {
+        x: arrow.dx * t + x1,
+        y: arrow.dy * t + y1
+    };
+    const tip = {
+        dx: x2 - middle.x,
+        dy: y2 - middle.y
+    };
+    context.beginPath();
+    context.moveTo(x1, y1);
+    context.lineTo(middle.x, middle.y);
+    context.moveTo(middle.x + 0.5 * tip.dy, middle.y - 0.5 * tip.dx);
+    context.lineTo(middle.x - 0.5 * tip.dy, middle.y + 0.5 * tip.dx);
+    context.lineTo(x2, y2);
+    context.closePath();
+    context.stroke();
+};
 
 drawState("state1", .5, .5);
