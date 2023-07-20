@@ -16,6 +16,7 @@ class Automaton {
         this.states = undefined;
         this.delta = undefined;
         this.alpha = undefined;
+        this.positions = undefined;
     }
 }
 
@@ -70,6 +71,14 @@ function buildAutomata() {
         }
     }
 
+    var angle = 2 * Math.PI / A.states.size;
+    A.positions = new Map();
+    let i = 0;
+    for (st of A.states) {
+        A.positions.set(st[0], [Math.cos(i * angle), Math.sin(i * angle)]);
+        ++i;
+    }
+
     A.delta = new Array(A.states.size);
     for (let i = 0; i < A.delta.length; i++) {
         A.delta[i] = new Array(A.alpha.size);
@@ -122,7 +131,8 @@ function drawScene() {
     var angle = 2 * Math.PI / A.states.size;
     let i = 0;
     for (const state of A.states) {
-        drawState(state[0], Math.cos(i * angle), Math.sin(i * angle));
+        const pos = A.positions.get(state[0]);
+        drawState(state[0], pos[0], pos[1]);
         ++i;
     }
 }
@@ -136,6 +146,12 @@ function drawState(name, posX, posY) {
     ctx.textAlign = "center";
     ctx.textBaseline = 'middle';
     ctx.fillText(name, posX, posY);
+}
+
+function drawTransition(from, to, letter)
+{
+    return;
+    //todo 
 }
 
 drawState("state1", .5, .5);
