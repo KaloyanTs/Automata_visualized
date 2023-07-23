@@ -14,6 +14,7 @@ deltaInput.addEventListener("input", OnInput, false);
 deltaInput.style.height = 0;
 deltaInput.style.height = (deltaInput.scrollHeight) + "px";
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+const speedSlider = document.getElementById("speed");
 
 class Automaton {
     constructor() {
@@ -38,10 +39,17 @@ function OnInput() {
 
 document.getElementById("animation").addEventListener('change', (event) => {
     document.getElementById("check").disabled = !document.getElementById("animation").checked;
+    document.getElementById("speed").disabled = !document.getElementById("animation").checked;
     if (!document.getElementById("animation").checked) {
         checkFast();
     }
 })
+
+speedSlider.onmouseover = () => { speedSlider.title = speedSlider.value / 1000 + " sec"; }
+speedSlider.onmousedown = () => { speedSlider.title = speedSlider.value / 1000 + " sec"; }
+speedSlider.onmouseup = () => { speedSlider.title = speedSlider.value / 1000 + " sec"; }
+speedSlider.onclick = () => { speedSlider.title = speedSlider.value / 1000 + " sec"; }
+speedSlider.oninput = () => { speedSlider.title = speedSlider.value / 1000 + " sec"; }
 
 var wordInput = document.getElementById("word");
 wordInput.oninput = function () {
@@ -170,13 +178,14 @@ document.getElementById("build").onclick = buildAutomata;
 // check word --------------------------------------------------------------------------------------------------
 
 document.getElementById("check").onclick = async () => {
+    console.log(speedSlider.value);
     displayResult.innerHTML = "checking...";
     displayResult.style.color = "black";
     var word = document.getElementById("word").value;
     A.currentState = A.states.get(A.initialState);
     var save = A.currentState;
     drawScene();
-    await sleep(400);
+    await sleep(speedSlider.value);
     for (const a of word) {
         if (!A.alpha.has(a)) {
             A.currentState = undefined;
@@ -184,14 +193,14 @@ document.getElementById("check").onclick = async () => {
         }
         A.currentState = undefined;
         drawScene();
-        await sleep(100);
+        await sleep(speedSlider.value / 4);
         A.currentState = A.delta[save][A.alpha.get(a)];
         save = A.currentState;
         drawScene();
-        await sleep(400);
+        await sleep(speedSlider.value);
     }
     drawScene();
-    await sleep(200);
+    await sleep(speedSlider.value / 2);
     var res = A.finalStates.has(A.indexToState[A.currentState]);
     if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
     else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
@@ -278,19 +287,6 @@ function drawState(name, posX, posY) {
 }
 
 function drawTransition(from, to, letter) {
-    if (A.activeTransition == [from, letter]) { ctx.strokeStyle = "red"; }
-    if (from == to) {
-        const pos = A.positions.get(from);
-        var fromPosX = w / 2 + pos[0] * (Math.min(w, h) - 80) / 2;
-        var fromPosY = h / 2 - pos[1] * (Math.min(w, h) - 80) / 2;
-        var scaled = [pos[0] * 20, pos[1] * 20];
-        ctx.beginPath();
-        ctx.arc(fromPosX + scaled[0], fromPosY - scaled[1], 20, 0, 2 * Math.PI);
-        //todo a lot of calculations
-        // check cases by starting end ending angle
-        ctx.stroke();
-        return;
-    }
     var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 80) / 2;
     var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 80) / 2;
     var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 80) / 2;
@@ -301,12 +297,17 @@ function drawTransition(from, to, letter) {
     dir[1] = dir[1] / len * 20;
     var dirRotPlus = rotateVector(dir, Math.PI / 6);
     var dirRotMinus = rotateVector(dir, -Math.PI / 6);
-    drawArrow(ctx, fromPosX + dirRotMinus[0], fromPosY + dirRotMinus[1], toPosX - dirRotPlus[0], toPosY - dirRotPlus[1], 0.97);
+    if (from != to)
+        drawArrow(ctx, fromPosX + dirRotMinus[0], fromPosY + dirRotMinus[1], toPosX - dirRotPlus[0], toPosY - dirRotPlus[1], 0.97);
     ctx.textAlign = "center";
     ctx.textBaseline = 'middle';
-    ctx.fillText(letter, (fromPosX + toPosX + dirRotMinus[0] - dirRotPlus[0]) / 2 + dir[1] / 2,
-        (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
-
+    if (from != to) {
+        ctx.fillText(letter, (fromPosX + toPosX + dirRotMinus[0] - dirRotPlus[0]) / 2 + dir[1] / 2,
+            (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
+    }
+    else {
+        ctx.fillText(letter, fromPosX, fromPosY+8);
+    }
     ctx.strokeStyle = 'black';
 }
 
