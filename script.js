@@ -8,8 +8,12 @@ ctx.lineWidth = 3;
 const count = 6;
 var alpha;
 const deltaInput = document.getElementById("delta");
+const displayResult = document.getElementById("result");
 deltaInput.setAttribute("style", "height:" + (deltaInput.scrollHeight) + "px;overflow-y:hidden;");
 deltaInput.addEventListener("input", OnInput, false);
+deltaInput.style.height = 0;
+deltaInput.style.height = (deltaInput.scrollHeight) + "px";
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
 class Automaton {
     constructor() {
@@ -19,17 +23,33 @@ class Automaton {
         this.positions = undefined;
         this.indexToLetter = undefined;
         this.indexToState = undefined;
-        this.activeTransition = undefined;
+        this.currentState = undefined;
+        this.finalStates = undefined;
+        this.initialState = undefined;
     }
 }
 
-var A = new Automaton();
+var A = undefined;
 
 function OnInput() {
     this.style.height = 0;
     this.style.height = (this.scrollHeight) + "px";
 }
 
+document.getElementById("animation").addEventListener('change', (event) => {
+    document.getElementById("check").disabled = !document.getElementById("animation").checked;
+    if (!document.getElementById("animation").checked) {
+        checkFast();
+    }
+})
+
+var wordInput = document.getElementById("word");
+wordInput.oninput = function () {
+    if (wordInput.value.length > 0 && (typeof A == 'undefined' || !A.alpha.has(wordInput.value.slice(-1))))
+        wordInput.value = wordInput.value.slice(0, -1);
+    else if (!document.getElementById("animation").checked)
+        checkFast();
+}
 
 document.getElementById("alphabet").oninput = getAlpha;
 
@@ -57,25 +77,62 @@ function getAlpha() {
     }
 }
 
+document.getElementById("final").oninput = getFinal;
+
+function getFinal() {
+    const txt = document.getElementById("final").value;
+    var comma = (txt.slice(-1) == ",");
+    var f = txt.split(",");
+    for (let i = 0; i < f.length; i++) {
+        f[i] = f[i].trim();
+    }
+    f = f.filter((str) => str != "");
+    document.getElementById("final").value = f;
+    if (comma) {
+        document.getElementById("final").value += ",";
+    }
+    A.finalStates = new Set();
+    for (l of f) {
+        A.finalStates.add(l);
+    }
+}
+
+function getInitial() {
+    A.initialState = document.getElementById("initial").value;
+    if (!A.states.has(A.initialState))
+        throw "Automaton does not have a valid initial state...";
+}
+
+
 function buildAutomata() {
-    getAlpha();
-    var lines = deltaInput.value.split("\n");
-    A.states = new Map();
-    A.indexToState = [];
-    var stateIndex = 0;
-    for (let i = 0; i < lines.length; i++) {
-        lines[i] = lines[i].split("-");
-        if (lines[i].length != 3) { alert("bad delta function..."); A.states = undefined; return; }
-        for (let j = 0; j < lines[i].length; j++) {
-            lines[i][j] = lines[i][j].trim();
-            if (j < 2) {
-                if (!A.states.has(lines[i][j])) {
-                    A.states.set(lines[i][j], stateIndex);
-                    A.indexToState.push(lines[i][j]);
-                    ++stateIndex;
+    A = new Automaton();
+    try {
+        getAlpha();
+        getFinal();
+        var lines = deltaInput.value.split("\n");
+        A.states = new Map();
+        A.indexToState = [];
+        var stateIndex = 0;
+        for (let i = 0; i < lines.length; i++) {
+            lines[i] = lines[i].split("-");
+            if (lines[i].length != 3) { alert("bad delta function..."); A.states = undefined; return; }
+            for (let j = 0; j < lines[i].length; j++) {
+                lines[i][j] = lines[i][j].trim();
+                if (j < 2) {
+                    if (!A.states.has(lines[i][j])) {
+                        A.states.set(lines[i][j], stateIndex);
+                        A.indexToState.push(lines[i][j]);
+                        ++stateIndex;
+                    }
                 }
             }
         }
+        getInitial();
+    } catch (error) {
+        alert(error);
+        A = undefined;
+        displayResult.innerHTML = "No automaton";
+        return;
     }
 
     var angle = 2 * Math.PI / A.states.size;
@@ -105,12 +162,61 @@ function buildAutomata() {
 
     drawScene();
 
+    if (!document.getElementById("animation").checked)
+        checkFast();
+
     //todo finish -> drawScene
 }
 
 document.getElementById("build").onclick = buildAutomata;
 
-document.getElementById("check").onclick = getAlpha;
+// check word --------------------------------------------------------------------------------------------------
+
+document.getElementById("check").onclick = async () => {
+    displayResult.innerHTML = "checking...";
+    displayResult.style.color = "black";
+    var word = document.getElementById("word").value;
+    A.currentState = A.states.get(A.initialState);
+    var save = A.currentState;
+    drawScene();
+    await sleep(400);
+    for (const a of word) {
+        if (!A.alpha.has(a)) {
+            A.currentState = undefined;
+            break;
+        }
+        A.currentState = undefined;
+        drawScene();
+        await sleep(100);
+        A.currentState = A.delta[save][A.alpha.get(a)];
+        save = A.currentState;
+        drawScene();
+        await sleep(400);
+    }
+    drawScene();
+    await sleep(200);
+    var res = A.finalStates.has(A.indexToState[A.currentState]);
+    if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
+    else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
+    A.currentState = undefined;
+    drawScene();
+}
+
+function checkFast() {
+    var word = document.getElementById("word").value;
+    A.currentState = A.states.get(A.initialState);
+    var save = A.currentState;
+    for (const a of word) {
+        if (!A.alpha.has(a)) {
+            A.currentState = undefined;
+            break;
+        }
+        A.currentState = A.delta[A.currentState][A.alpha.get(a)];
+    }
+    var res = A.finalStates.has(A.indexToState[A.currentState]);
+    if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
+    else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
+}
 
 // geometry functions -------------------------------------------------------------------------------------------
 
@@ -150,11 +256,25 @@ function drawScene() {
 }
 
 function drawState(name, posX, posY) {
-    ctx.beginPath();
+    var f = A.finalStates.has(name);
+    var i = A.initialState == name;
     posX = w / 2 + posX * (Math.min(w, h) - 80) / 2;
     posY = h / 2 - posY * (Math.min(w, h) - 80) / 2;
+    ctx.beginPath();
+    if (typeof A.currentState != 'undefined' && A.indexToState[A.currentState] == name) {
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 6;
+    }
+    else if (i) ctx.strokeStyle = "red";
     ctx.arc(posX, posY, 20, 0, 2 * Math.PI);
     ctx.stroke();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    if (f) {
+        ctx.beginPath();
+        ctx.arc(posX, posY, 15, 0, 2 * Math.PI);
+        ctx.stroke();
+    }
     ctx.textAlign = "center";
     ctx.textBaseline = 'middle';
     ctx.fillText(name, posX, posY);
@@ -172,7 +292,7 @@ function drawTransition(from, to, letter) {
         //todo a lot of calculations
         // check cases by starting end ending angle
         ctx.stroke();
-        console.log(fromPosX, fromPosY);
+        // console.log(fromPosX, fromPosY);
         return;
     }
     var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 80) / 2;
@@ -190,8 +310,8 @@ function drawTransition(from, to, letter) {
     ctx.textBaseline = 'middle';
     ctx.fillText(letter, (fromPosX + toPosX + dirRotMinus[0] - dirRotPlus[0]) / 2 + dir[1] / 2,
         (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
-    
-    ctx.strokeStyle='black';
+
+    ctx.strokeStyle = 'black';
 }
 
 const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
@@ -216,7 +336,5 @@ const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
     context.closePath();
     context.stroke();
 };
-
-drawState("state1", .5, .5);
 
 //end of drawing functions -----------------------------------------------------------------------------------------

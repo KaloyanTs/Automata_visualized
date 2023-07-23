@@ -11,12 +11,22 @@
     <h1 id="PrjName">DFA</h1>
     <div class="row">
         <div class="block" id="controls" style="display: inline-block;">
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>s</em></span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input value="1" type="text" style="display: block; margin: 10px; width: 50%;" id="initial">
+                </div>
+            </div>
+
             <div class="row">
                 <div class="blockk" style="display: inline-block;">
                     <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>Σ</em></span></p>
                 </div>
                 <div class="blockk" style="display: inline-block;">
-                    <input type="text" style="display: block; margin: 10px; width: 50%;" id="alphabet">
+                    <input value="a,b" type="text" style="display: block; margin: 10px; width: 50%;" id="alphabet">
                 </div>
             </div>
 
@@ -25,23 +35,55 @@
                     <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>δ</em></span></p>
                 </div>
                 <div class="blockk" style="display: inline-block;">
-                    <textarea style="display: block; margin: 10px; width: 100%;"  id="delta"></textarea>
+                    <textarea cols="7" style="display: block; margin: 10px;" id="delta">1-2-a
+2-3-a
+3-1-b
+1-1-b
+2-1-b
+3-3-a</textarea>
                 </div>
             </div>
-            
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>F</em></span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input value="1" type="text" style="display: block; margin: 10px; width: 50%;" id="final">
+                </div>
+            </div>
+
+            <div class="row">
+                <button id="build" style="color: white; background-color: darkviolet; height: 37.5px; width: 200px; display: inline-block; margin-left: 5px;">BUILD</button>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: large;">Animation</span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input checked="true" type="checkbox" style="display: block; margin: 10px; width: 50%;"
+                        id="animation">
+                </div>
+            </div>
+
             <div style="display: flex; margin: 10px; margin-left:30px; width: 100%;">
-                <input type="word" style="display: block; width: 50%;" id="word">
+                <input value="aab" type="word" style="display: block; width: 50%;" id="word">
                 <button id="check" style="display: inline-block; margin-left: 5px;">check</button>
-                <button id="build" style="display: inline-block; margin-left: 5px;">build</button>
-           </div>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p id="result" width="200px" style="font-size: x-large; margin: 0px; width: 300px;">No automaton</p>
+                </div>
+            </div>
+
         </div>
         <div class="block" id="main" style="display: inline-block;">
             <canvas id="field" width="950px" height="500px" style="margin: 20px;">
             </canvas><br>
-            
-            <button id="makeConvexHull">pack</button>
         </div>
-      </div>
+    </div>
 </body>
 <script src="script.js"></script>
 
