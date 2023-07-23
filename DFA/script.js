@@ -152,7 +152,6 @@ function buildAutomata() {
     for (const line of lines) {
         if (typeof A.delta[A.states.get(line[0])][A.alpha.get(line[2])] === 'undefined') ++ruleCount;
         A.delta[A.states.get(line[0])][A.alpha.get(line[2])] = A.states.get(line[1]);
-        //todo remove console.log("set " + line[0] + "->" + line[2] + "to " + A.delta[A.states.get(line[0])][A.alpha.get(line[2])])
     }
     if (ruleCount != A.states.size * A.alpha.size) {
         alert("bad delta function...\nautomaton is not a DFA...");
@@ -164,8 +163,6 @@ function buildAutomata() {
 
     if (!document.getElementById("animation").checked)
         checkFast();
-
-    //todo finish -> drawScene
 }
 
 document.getElementById("build").onclick = buildAutomata;
@@ -292,7 +289,6 @@ function drawTransition(from, to, letter) {
         //todo a lot of calculations
         // check cases by starting end ending angle
         ctx.stroke();
-        // console.log(fromPosX, fromPosY);
         return;
     }
     var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 80) / 2;
