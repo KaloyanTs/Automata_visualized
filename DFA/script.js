@@ -8,6 +8,7 @@ ctx.lineWidth = 3;
 const count = 6;
 var alpha;
 const deltaInput = document.getElementById("delta");
+const minButton = document.getElementById("minimize");
 const displayResult = document.getElementById("result");
 deltaInput.setAttribute("style", "height:" + (deltaInput.scrollHeight) + "px;overflow-y:hidden;");
 deltaInput.addEventListener("input", OnInput, false);
@@ -224,6 +225,79 @@ function checkFast() {
     else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
 }
 
+// minimal automaton
+
+minButton.onclick = minimize;
+
+function minimize() {
+    if (typeof A == 'undefined') { alert("No automaton built..."); return; }
+    var arr = new Array(A.states.size);
+    for (let i = 0; i < arr.length; i++)
+        arr[i] = i;
+    var ind = new Array(A.states.size);
+    for (const st of arr) {
+        ind[st] = (A.finalStates.has(A.indexToState[st]) ? 1 : 0);
+    }
+    console.log(ind);
+    arr.sort((a, b) => { return ind[a] - ind[b]; });
+    console.log(arr);
+    var buf = new Array(A.states.size);
+    for (let i = 0; i < A.states.size * A.alpha.size; i++) {
+        arr.sort((a, b) => { return ind[A.delta[a][i % A.alpha.size]] - ind[A.delta[b][i % A.alpha.size]] });
+        var c = 0;
+        for (let j = 0; j < ind.length - 1; j++) {
+            buf[j] = c;
+            if (ind[arr[j]] != ind[arr[j + 1]] || ind[A.delta[arr[j]][i % A.alpha.size]] != ind[A.delta[arr[j + 1]][i % A.alpha.size]])
+                ++c;
+        }
+        buf[ind.length - 1] = c;
+        ind = JSON.parse(JSON.stringify(buf));
+    }
+
+    B = new Automaton();
+    B.initialState = ind[A.states.get(A.initialState)];
+
+    B.finalStates = new Set();
+    for (const st of A.finalStates) {
+        B.finalStates.add(ind[A.states.get(st)]);
+    }
+
+    B.states = new Map();
+    for (let i = 0; i < ind.length; i++)
+        B.states.set(ind[i], ind[i]);
+
+    B.alpha = new Map(A.alpha);
+
+    var angle = 2 * Math.PI / B.states.size;
+    B.positions = new Map();
+    let i = 0;
+    for (st of B.states) {
+        B.positions.set(st[0], [Math.cos(i * angle), Math.sin(i * angle)]);
+        ++i;
+    }
+
+    B.delta = new Array(B.states.size);
+    for (let i = 0; i < B.delta.length; i++) {
+        B.delta[i] = new Array(B.alpha.size);
+    }
+
+    for (let i = 0; i < A.states.size; i++)
+        for (let a = 0; a < A.alpha.size; a++)
+            B.delta[ind[i]][a] = ind[A.delta[i][a]];
+
+    //todo print to check for errors
+
+    B.indexToLetter = JSON.parse(JSON.stringify(A.indexToLetter));
+
+    B.indexToState = new Array(B.states.size);
+    for (const st of B.states) {
+        B.indexToState[st[1]] = st[0];
+    }
+
+    A = B;
+    drawScene();
+}
+
 // geometry functions -------------------------------------------------------------------------------------------
 
 function rotateVector(v, angle) {
@@ -306,7 +380,7 @@ function drawTransition(from, to, letter) {
             (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
     }
     else {
-        ctx.fillText(letter, fromPosX, fromPosY+8);
+        ctx.fillText(letter, fromPosX, fromPosY + 8);
     }
     ctx.strokeStyle = 'black';
 }
