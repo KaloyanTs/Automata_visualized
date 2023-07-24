@@ -28,6 +28,7 @@ class Automaton {
         this.currentState = undefined;
         this.finalStates = undefined;
         this.initialState = undefined;
+        this.graph = undefined;
     }
 }
 
@@ -100,6 +101,7 @@ function getFinal() {
     if (comma) {
         document.getElementById("final").value += ",";
     }
+    if (typeof A == 'undefined') return;
     A.finalStates = new Set();
     for (l of f) {
         A.finalStates.add(l);
@@ -153,18 +155,24 @@ function buildAutomata() {
     }
 
     A.delta = new Array(A.states.size);
+    A.graph = new Array(A.states.size);
     for (let i = 0; i < A.delta.length; i++) {
         A.delta[i] = new Array(A.alpha.size);
+        A.graph[i] = new Array(A.states.size);
+        for (let j = 0; j < A.graph[i].length; j++) {
+            A.graph[i][j] = [];
+        }
     }
 
     var ruleCount = 0;
     for (const line of lines) {
         if (typeof A.delta[A.states.get(line[0])][A.alpha.get(line[2])] === 'undefined') ++ruleCount;
         A.delta[A.states.get(line[0])][A.alpha.get(line[2])] = A.states.get(line[1]);
+        A.graph[A.states.get(line[0])][A.states.get(line[1])].push(A.alpha.get(line[2]));
     }
     if (ruleCount != A.states.size * A.alpha.size) {
         alert("bad delta function...\nautomaton is not a DFA...");
-        A = new Automaton();
+        A = undefined;
         return;
     }
 
@@ -179,7 +187,6 @@ document.getElementById("build").onclick = buildAutomata;
 // check word --------------------------------------------------------------------------------------------------
 
 document.getElementById("check").onclick = async () => {
-    console.log(speedSlider.value);
     displayResult.innerHTML = "checking...";
     displayResult.style.color = "black";
     var word = document.getElementById("word").value;
@@ -238,9 +245,7 @@ function minimize() {
     for (const st of arr) {
         ind[st] = (A.finalStates.has(A.indexToState[st]) ? 1 : 0);
     }
-    console.log(ind);
     arr.sort((a, b) => { return ind[a] - ind[b]; });
-    console.log(arr);
     var buf = new Array(A.states.size);
     for (let i = 0; i < A.states.size * A.alpha.size; i++) {
         arr.sort((a, b) => { return ind[A.delta[a][i % A.alpha.size]] - ind[A.delta[b][i % A.alpha.size]] });
@@ -277,17 +282,28 @@ function minimize() {
     }
 
     B.delta = new Array(B.states.size);
+    B.graph = new Array(B.states.size);
     for (let i = 0; i < B.delta.length; i++) {
         B.delta[i] = new Array(B.alpha.size);
+        B.graph[i] = new Array(B.states.size);
+        for (let j = 0; j < B.graph[i].length; j++) {
+            B.graph[i][j] = [];
+        }
     }
 
+    B.indexToLetter = JSON.parse(JSON.stringify(A.indexToLetter));
+
     for (let i = 0; i < A.states.size; i++)
-        for (let a = 0; a < A.alpha.size; a++)
+        for (let a = 0; a < A.alpha.size; a++) {
             B.delta[ind[i]][a] = ind[A.delta[i][a]];
+            B.graph[ind[i]][B.delta[ind[i]][a]].push(a);
+            B.graph[ind[i]][B.delta[ind[i]][a]] = B.graph[ind[i]][B.delta[ind[i]][a]]
+                .filter((element, index) => {
+                    return B.graph[ind[i]][B.delta[ind[i]][a]].indexOf(element) === index;
+                });
+        }
 
     //todo print to check for errors
-
-    B.indexToLetter = JSON.parse(JSON.stringify(A.indexToLetter));
 
     B.indexToState = new Array(B.states.size);
     for (const st of B.states) {
@@ -327,9 +343,9 @@ function drawScene() {
         drawState(state[0], pos[0], pos[1]);
         ++i;
     }
-    for (let i = 0; i < A.delta.length; i++) {
-        for (let j = 0; j < A.delta[i].length; j++) {
-            drawTransition(A.indexToState[i], A.indexToState[A.delta[i][j]], A.indexToLetter[j]);
+    for (let i = 0; i < A.graph.length; i++) {
+        for (let j = 0; j < A.graph[i].length; j++) {
+            drawTransition(i, j);
             //todo letter badly working
         }
     }
@@ -360,11 +376,13 @@ function drawState(name, posX, posY) {
     ctx.fillText(name, posX, posY);
 }
 
-function drawTransition(from, to, letter) {
-    var fromPosX = w / 2 + A.positions.get(from)[0] * (Math.min(w, h) - 80) / 2;
-    var fromPosY = h / 2 - A.positions.get(from)[1] * (Math.min(w, h) - 80) / 2;
-    var toPosX = w / 2 + A.positions.get(to)[0] * (Math.min(w, h) - 80) / 2;
-    var toPosY = h / 2 - A.positions.get(to)[1] * (Math.min(w, h) - 80) / 2;
+function drawTransition(from, to) {
+    if (A.graph[from][to].length == 0) return;
+    var letter = A.graph[from][to].map(a => A.indexToLetter[a]).join(",");
+    var fromPosX = w / 2 + A.positions.get(A.indexToState[from])[0] * (Math.min(w, h) - 80) / 2;
+    var fromPosY = h / 2 - A.positions.get(A.indexToState[from])[1] * (Math.min(w, h) - 80) / 2;
+    var toPosX = w / 2 + A.positions.get(A.indexToState[to])[0] * (Math.min(w, h) - 80) / 2;
+    var toPosY = h / 2 - A.positions.get(A.indexToState[to])[1] * (Math.min(w, h) - 80) / 2;
     var dir = [toPosX - fromPosX, toPosY - fromPosY];
     var len = distance2D([0, 0], dir);
     dir[0] = dir[0] / len * 20;
