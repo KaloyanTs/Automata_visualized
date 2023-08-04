@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFA</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="icon.ico">
+</head>
+
+<body style="background-color: #ffc852;">
+    <h1 id="PrjName">NFA</h1>
+    <div class="row">
+        <div class="block" id="controls" style="display: inline-block;">
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>s</em></span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input value="1" type="text" style="display: block; margin: 10px; width: 50%;" id="initial">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>Σ</em></span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input value="a,b" type="text" style="display: block; margin: 10px; width: 50%;" id="alphabet">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <math display="inline">
+                        <mi style="font-size: x-large; margin: 10px">&Delta;</mi>
+                    </math>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <textarea cols="7" style="display: block; margin: 10px;" id="delta">1-4-a
+1-5-b
+4-2-a
+4-2-b
+5-3-a
+5-3-b
+2-2-a
+2-2-b
+3-3-a
+3-3-b</textarea>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: x-large;"><em>F</em></span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input value="1" type="text" style="display: block; margin: 10px; width: 50%;" id="final">
+                </div>
+            </div>
+
+            <div class="row">
+                <button id="build"
+                    style="color: white; background-color: darkviolet; height: 37.5px; width: 200px; display: inline-block; margin-left: 5px;">BUILD</button>
+            </div>
+
+            <div class="row">
+                <button id="determinize"
+                    style="color: white; background-color: darkviolet; height: 37.5px; width: 200px; display: inline-block; margin-left: 5px;">DETERMINIZE</button>
+            </div>
+
+            <div class="row">
+                <button id="minimize"
+                    style="color: white; background-color: darkviolet; height: 37.5px; width: 200px; display: inline-block; margin-left: 5px;">MINIMIZE</button>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: large;">Animation</span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <input checked="true" type="checkbox" style="display: block; margin: 10px; width: 50%;"
+                        id="animation">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p style="margin: 10px;"><span class="math inline" style="font-size: medium;">Animation speed:
+                        </span></p>
+                </div>
+                <div class="blockk" style="display: inline-block;">
+                    <div class="slidecontainer">
+                        <input type="range" min="30" max="1000" value="400" class="slider" id="speed">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; margin: 10px; margin-left:30px; width: 100%;">
+                <input value="aab" type="word" style="display: block; width: 50%;" id="word">
+                <button id="check" style="display: inline-block; margin-left: 5px;">check</button>
+            </div>
+
+            <div class="row">
+                <div class="blockk" style="display: inline-block;">
+                    <p id="result" width="200px" style="font-size: x-large; margin: 0px; width: 300px;">No automaton</p>
+                </div>
+            </div>
+
+        </div>
+        <div class="block" id="main" style="display: inline-block;">
+            <canvas id="field" width="950px" height="500px" style="margin: 20px;">
+            </canvas><br>
+        </div>
+    </div>
+</body>
+<script src="script.js"></script>
+
+</html>
