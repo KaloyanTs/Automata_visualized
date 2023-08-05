@@ -135,7 +135,7 @@ function getInitial() {
     if (comma) {
         document.getElementById("initial").value += ",";
     }
-    if (typeof A != 'AutomatonNFA') return;
+    if (typeof A == 'undefined') return;
     A.initialStates = new Set();
     for (l of f) {
         A.initialStates.add(l);
@@ -164,7 +164,7 @@ function buildAutomata() {
                         ++stateIndex;
                     }
                 }
-            }//todo write NFA
+            }
         }
         getInitial();
     } catch (error) {
@@ -327,8 +327,6 @@ function minimize() {
                 });
         }
 
-    //todo print to check for errors
-
     B.indexToState = new Array(B.states.size);
     for (const st of B.states) {
         B.indexToState[st[1]] = st[0];
@@ -451,25 +449,87 @@ const drawArrow = (context, x1, y1, x2, y2, t = 0.9) => {
 
 //end of drawing functions -----------------------------------------------------------------------------------------
 
-document.getElementById("determinize").onclick = () => alert("not working yet...");
+document.getElementById("determinize").onclick = determinize //() => alert("not working yet...");
+
+//determinization of NFA
 
 function determinize() {
-    var newStates = [JSON.parse(JSON.stringify(A.initialStates))];
-    //todo find all states with bfs and traversing each letter
-
-
-    var B = new AutomatonNFA()
+    if (typeof A == 'undefined') return;
+    var B = new Automaton();
+    B.initialState = Array.from(A.initialStates).sort().join(',');
     var counter = 0;
     B.states = new Map();
-    B.indexToState = new Array(newStates.length);
-    for (st of newStates) {
+    B.indexToState = [];
+    B.indexToLetter = JSON.parse(JSON.stringify(A.indexToLetter));
+    B.alpha = new Map(A.alpha);
+    B.delta = [];
+    B.finalStates = new Set();
+
+    //traversal
+    var q = [B.initialState];
+    var c = 0;
+    while (q.length > 0) {
+        var st = q.pop();
+        //console.log("queue poped: " + st + " left:" + q);
         B.states.set(st, counter);
-        B.indexToState[counter] = st;
+        //console.log(st, " -> ", B.states.get(st));
+        B.indexToState.push(st);
+        st = st.split(',');
+        if (st.some((el) => A.finalStates.has(el))) {
+            B.finalStates.add(st.join(','));
+            //console.log(st, " is final");
+        }
+        B.delta.push(new Array(B.alpha.size));
+        for (let i = 0; i < A.indexToLetter.length; ++i) {
+            var to = [];
+            for (const s of st) {
+                const ind = A.states.get(s);
+                to = to.concat(A.delta[ind][i].map(a => A.indexToState[a]));
+                //console.log(s + " with " + A.indexToLetter[i] + " -> " + A.delta[ind][i].map(a => A.indexToState[a]));
+            }
+            to = to.sort().filter((item,
+                index) => to.indexOf(item) === index);
+            var toStr = to.join(',');
+            //console.log(st + " with " + A.indexToLetter[i] + " -> " + toStr);
+            B.delta[counter][i] = toStr;
+            //console.log("is it seen: " + q.some(a => a == toStr));
+            if (!q.some(a => a == toStr) && !B.states.has(toStr)) q.push(toStr);
+            //console.log("queue ->", q);
+            ++c;
+            if (c > 20) return;
+        }
         ++counter;
     }
-    B.indexToLetter = JSON.parse(JSON.stringify(A.indexToLetter))
-    B.alpha = new Map(A.alpha);
-    //todo work on transitions (maybe while bfs-ing)
+    for (let i = 0; i < B.delta.length; ++i) {
+        for (let j = 0; j < B.delta[i].length; ++j)
+            B.delta[i][j] = B.states.get(B.delta[i][j]);
+    }
+
+    var angle = 2 * Math.PI / B.states.size;
+    B.positions = new Map();
+    let i = 0;
+    for (st of B.states) {
+        B.positions.set(st[0], [Math.cos(i * angle), Math.sin(i * angle)]);
+        ++i;
+    }
+
+    B.graph = new Array(B.states.size);
+    for (let i = 0; i < B.graph.length; ++i) {
+        B.graph[i] = new Array(B.states.size);
+        for (let j = 0; j < B.graph[i].length; ++j)
+            B.graph[i][j] = [];
+    }
+
+    for (let i = 0; i < B.delta.length; i++) {
+        for (let j = 0; j < B.delta[i].length; j++) {
+            console.log(i, j, B.delta[i][j]);
+            B.graph[i][B.delta[i][j]].push(j);
+        }
+    }
+
+    A = B;
+    drawScene();
+    //todo color initial states of NFA (and DFA)
 
     return;
 }
