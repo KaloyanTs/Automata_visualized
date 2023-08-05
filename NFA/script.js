@@ -455,8 +455,8 @@ document.getElementById("determinize").onclick = determinize //() => alert("not 
 
 function determinize() {
     if (typeof A == 'undefined') return;
-    var B = new Automaton();
-    B.initialState = Array.from(A.initialStates).sort().join(',');
+    var B = new AutomatonNFA();
+    B.initialStates = [Array.from(A.initialStates).sort().join(',')];
     var counter = 0;
     B.states = new Map();
     B.indexToState = [];
@@ -466,7 +466,7 @@ function determinize() {
     B.finalStates = new Set();
 
     //traversal
-    var q = [B.initialState];
+    var q = [B.initialStates[0]];
     var c = 0;
     while (q.length > 0) {
         var st = q.pop();
@@ -522,7 +522,7 @@ function determinize() {
 
     for (let i = 0; i < B.delta.length; i++) {
         for (let j = 0; j < B.delta[i].length; j++) {
-            console.log(i, j, B.delta[i][j]);
+            //todo investigate delta (see check) console.log(i, j, B.delta[i][j]);
             B.graph[i][B.delta[i][j]].push(j);
         }
     }
@@ -530,6 +530,7 @@ function determinize() {
     A = B;
     drawScene();
     //todo color initial states of NFA (and DFA)
+    //todo some problem with minimization (see default example)
 
     return;
 }
