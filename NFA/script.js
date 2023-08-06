@@ -275,11 +275,11 @@ function minimize() {
         arr.sort((a, b) => { return ind[A.delta[a][i % A.alpha.size]] - ind[A.delta[b][i % A.alpha.size]] });
         var c = 0;
         for (let j = 0; j < ind.length - 1; j++) {
-            buf[j] = c;
+            buf[arr[j]] = c;
             if (ind[arr[j]] != ind[arr[j + 1]] || ind[A.delta[arr[j]][i % A.alpha.size]] != ind[A.delta[arr[j + 1]][i % A.alpha.size]])
                 ++c;
         }
-        buf[ind.length - 1] = c;
+        buf[arr[ind.length - 1]] = c;
         ind = JSON.parse(JSON.stringify(buf));
     }
 
