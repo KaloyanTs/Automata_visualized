@@ -16,6 +16,7 @@ deltaInput.style.height = 0;
 deltaInput.style.height = (deltaInput.scrollHeight) + "px";
 const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 const speedSlider = document.getElementById("speed");
+ctx.font = "15px Times New Roman";
 
 class Automaton {
     constructor() {
@@ -262,6 +263,16 @@ minButton.onclick = minimize;
 
 function minimize() {
     if (typeof A == 'undefined') { alert("No automaton built..."); return; }
+    for (let i = 0; i < A.delta.length; i++) {
+        for (let j = 0; j < A.delta[i].length; j++) {
+            if (A.delta[i][j].length != 1) {
+                console.log(A.indexToState[i], A.indexToLetter[j], A.delta[i][j]);
+                alert("Automaton is not a DFA...");
+                return;
+            }
+        }
+
+    }
     var arr = new Array(A.states.size);
     for (let i = 0; i < arr.length; i++)
         arr[i] = i;
@@ -374,7 +385,6 @@ function drawScene() {
 
 function drawState(name, posX, posY) {
     var f = A.finalStates.has(name);
-    var i = A.initialState == name;
     posX = w / 2 + posX * (Math.min(w, h) - 80) / 2;
     posY = h / 2 - posY * (Math.min(w, h) - 80) / 2;
     ctx.beginPath();
@@ -382,7 +392,7 @@ function drawState(name, posX, posY) {
         ctx.strokeStyle = "blue";
         ctx.lineWidth = 6;
     }
-    else if (i) ctx.strokeStyle = "red";
+    //else if (i) ctx.strokeStyle = "red";
     ctx.arc(posX, posY, 20, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.strokeStyle = "black";
@@ -394,7 +404,13 @@ function drawState(name, posX, posY) {
     }
     ctx.textAlign = "center";
     ctx.textBaseline = 'middle';
+    if ((A.initialStates && A.initialStates.has(name))
+        ||
+        (A.initialState && A.initialState == name)
+    )
+        ctx.fillStyle = 'green';
     ctx.fillText(name, posX, posY);
+    ctx.fillStyle = 'black';
 }
 
 function drawTransition(from, to) {
@@ -419,7 +435,7 @@ function drawTransition(from, to) {
             (fromPosY + toPosY + dirRotMinus[1] - dirRotPlus[1]) / 2 - dir[0] / 2);
     }
     else {
-        ctx.fillText(letter, fromPosX, fromPosY + 8);
+        ctx.fillText(letter, fromPosX, fromPosY + 10);
     }
     ctx.strokeStyle = 'black';
 }
@@ -456,7 +472,9 @@ document.getElementById("determinize").onclick = determinize //() => alert("not 
 function determinize() {
     if (typeof A == 'undefined') return;
     var B = new AutomatonNFA();
-    B.initialStates = [Array.from(A.initialStates).sort().join(',')];
+    B.initialStates = new Set();
+    var init = Array.from(A.initialStates).sort().join(',');
+    B.initialStates.add(init);
     var counter = 0;
     B.states = new Map();
     B.indexToState = [];
@@ -466,7 +484,7 @@ function determinize() {
     B.finalStates = new Set();
 
     //traversal
-    var q = [B.initialStates[0]];
+    var q = [init];
     var c = 0;
     while (q.length > 0) {
         var st = q.pop();
@@ -502,7 +520,7 @@ function determinize() {
     }
     for (let i = 0; i < B.delta.length; ++i) {
         for (let j = 0; j < B.delta[i].length; ++j)
-            B.delta[i][j] = B.states.get(B.delta[i][j]);
+            B.delta[i][j] = [B.states.get(B.delta[i][j])];
     }
 
     var angle = 2 * Math.PI / B.states.size;
@@ -522,15 +540,11 @@ function determinize() {
 
     for (let i = 0; i < B.delta.length; i++) {
         for (let j = 0; j < B.delta[i].length; j++) {
-            //todo investigate delta (see check) console.log(i, j, B.delta[i][j]);
             B.graph[i][B.delta[i][j]].push(j);
         }
     }
 
     A = B;
     drawScene();
-    //todo color initial states of NFA (and DFA)
-    //todo some problem with minimization (see default example)
-
     return;
 }
