@@ -59,7 +59,8 @@ document.getElementById("animation").addEventListener('change', (event) => {
     document.getElementById("check").disabled = !document.getElementById("animation").checked;
     document.getElementById("speed").disabled = !document.getElementById("animation").checked;
     if (!document.getElementById("animation").checked) {
-        checkFast();
+        //checkFast();
+        checkInNFA();
     }
 })
 
@@ -74,7 +75,8 @@ wordInput.oninput = function () {
     if (wordInput.value.length > 0 && (typeof A == 'undefined' || !A.alpha.has(wordInput.value.slice(-1))))
         wordInput.value = wordInput.value.slice(0, -1);
     else if (!document.getElementById("animation").checked)
-        checkFast();
+        //checkFast();
+        checkInNFA();
 }
 
 document.getElementById("alphabet").oninput = getAlpha;
@@ -204,7 +206,8 @@ function buildAutomata() {
     drawScene();
 
     if (!document.getElementById("animation").checked)
-        checkFast();
+        //checkFast();
+        checkInNFA();
 }
 
 document.getElementById("build").onclick = buildAutomata;
@@ -294,8 +297,11 @@ function minimize() {
         ind = JSON.parse(JSON.stringify(buf));
     }
 
-    B = new Automaton();
-    B.initialState = ind[A.states.get(A.initialState)];
+    //todo test
+    B = new AutomatonNFA();
+    B.initialStates = new Set();
+    for (const st of A.initialStates)
+        B.initialStates.add(ind[A.states.get(A.initialState)]);
 
     B.finalStates = new Set();
     for (const st of A.finalStates) {
@@ -330,7 +336,7 @@ function minimize() {
 
     for (let i = 0; i < A.states.size; i++)
         for (let a = 0; a < A.alpha.size; a++) {
-            B.delta[ind[i]][a] = ind[A.delta[i][a]];
+            B.delta[ind[i]][a] = [ind[A.delta[i][a]]];
             B.graph[ind[i]][B.delta[ind[i]][a]].push(a);
             B.graph[ind[i]][B.delta[ind[i]][a]] = B.graph[ind[i]][B.delta[ind[i]][a]]
                 .filter((element, index) => {
@@ -547,4 +553,35 @@ function determinize() {
     A = B;
     drawScene();
     return;
+}
+
+//todo check word in NFA (with animation)
+
+
+//check word in NFA
+
+function checkInNFA() {
+    //todo debug something with stack
+    var word = document.getElementById("word").value;
+    if (typeof A == 'undefined') return;
+    var st = [];
+    var res = false;
+    // state, index TO BE read
+    for (const s of A.initialStates)
+        st.push([A.states.get(s), 0]);
+    var pair;
+    while (st.length > 0) {
+        //console.log(st);
+        pair = st.pop();
+        if (pair[1] == word.length) {
+            if (A.finalStates.has(A.indexToState[pair[0]])) { res = true; break; }
+            continue;
+        }
+        //console.log(pair, A.delta[pair[0]][A.alpha.get(word[pair[1]])]);
+        for (ind of A.delta[pair[0]][A.alpha.get(word[pair[1]])]) {
+            st.push([ind, pair[1] + 1]);
+        }
+    }
+    if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
+    else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
 }
