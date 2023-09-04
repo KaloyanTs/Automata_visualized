@@ -217,27 +217,53 @@ document.getElementById("build").onclick = buildAutomata;
 document.getElementById("check").onclick = async () => {
     displayResult.innerHTML = "checking...";
     displayResult.style.color = "black";
+    // var word = document.getElementById("word").value;
+    // A.currentState = A.states.get(A.initialState);
+    // var save = A.currentState;
+    // drawScene();
+    // await sleep(speedSlider.value);
+    // for (const a of word) {
+    //     if (!A.alpha.has(a)) {
+    //         A.currentState = undefined;
+    //         break;
+    //     }
+    //     A.currentState = undefined;
+    //     drawScene();
+    //     await sleep(speedSlider.value / 4);
+    //     A.currentState = A.delta[save][A.alpha.get(a)];
+    //     save = A.currentState;
+    //     drawScene();
+    //     await sleep(speedSlider.value);
+    // }
+    // drawScene();
+    // await sleep(speedSlider.value / 2);
+    // var res = A.finalStates.has(A.indexToState[A.currentState]);
+    // if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
+    // else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
+    // A.currentState = undefined;
+    // drawScene();
     var word = document.getElementById("word").value;
-    A.currentState = A.states.get(A.initialState);
-    var save = A.currentState;
-    drawScene();
-    await sleep(speedSlider.value);
-    for (const a of word) {
-        if (!A.alpha.has(a)) {
-            A.currentState = undefined;
-            break;
+    if (typeof A == 'undefined') return;
+    var st = [];
+    var res = false;
+    // state, index TO BE read
+    for (const s of A.initialStates)
+        st.push([A.states.get(s), 0]);
+    var pair;
+    while (st.length > 0) {
+        pair = st.pop();
+        A.currentState = pair[0];
+        drawScene();
+        await sleep((speedSlider.max - speedSlider.value) / 4);
+        //console.log(pair, A.delta[pair[0]][A.alpha.get(word[pair[1]])]);
+        if (pair[1] == word.length) {
+            if (A.finalStates.has(A.indexToState[pair[0]])) { res = true; break; }
+            continue;
         }
-        A.currentState = undefined;
-        drawScene();
-        await sleep(speedSlider.value / 4);
-        A.currentState = A.delta[save][A.alpha.get(a)];
-        save = A.currentState;
-        drawScene();
-        await sleep(speedSlider.value);
+        for (ind of A.delta[pair[0]][A.alpha.get(word[pair[1]])]) {
+            st.push([ind, pair[1] + 1]);
+        }
     }
-    drawScene();
-    await sleep(speedSlider.value / 2);
-    var res = A.finalStates.has(A.indexToState[A.currentState]);
     if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
     else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
     A.currentState = undefined;
@@ -475,6 +501,21 @@ document.getElementById("determinize").onclick = determinize //() => alert("not 
 
 //determinization of NFA
 
+//todo debug determinization with:
+// 1
+// a,b
+// 1-4-b
+// 1-5-b
+// 4-2-a
+// 4-2-b
+// 5-3-a
+// 5-3-b
+// 2-2-a
+// 2-2-b
+// 3-3-a
+// 3-2-b
+// 2-5-b
+// 1,3
 function determinize() {
     if (typeof A == 'undefined') return;
     var B = new AutomatonNFA();
@@ -561,7 +602,6 @@ function determinize() {
 //check word in NFA
 
 function checkInNFA() {
-    //todo debug something with stack
     var word = document.getElementById("word").value;
     if (typeof A == 'undefined') return;
     var st = [];
@@ -571,13 +611,12 @@ function checkInNFA() {
         st.push([A.states.get(s), 0]);
     var pair;
     while (st.length > 0) {
-        //console.log(st);
         pair = st.pop();
+        //console.log(pair, A.delta[pair[0]][A.alpha.get(word[pair[1]])]);
         if (pair[1] == word.length) {
             if (A.finalStates.has(A.indexToState[pair[0]])) { res = true; break; }
             continue;
         }
-        //console.log(pair, A.delta[pair[0]][A.alpha.get(word[pair[1]])]);
         for (ind of A.delta[pair[0]][A.alpha.get(word[pair[1]])]) {
             st.push([ind, pair[1] + 1]);
         }
