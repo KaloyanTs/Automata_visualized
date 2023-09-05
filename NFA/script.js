@@ -217,31 +217,6 @@ document.getElementById("build").onclick = buildAutomata;
 document.getElementById("check").onclick = async () => {
     displayResult.innerHTML = "checking...";
     displayResult.style.color = "black";
-    // var word = document.getElementById("word").value;
-    // A.currentState = A.states.get(A.initialState);
-    // var save = A.currentState;
-    // drawScene();
-    // await sleep(speedSlider.value);
-    // for (const a of word) {
-    //     if (!A.alpha.has(a)) {
-    //         A.currentState = undefined;
-    //         break;
-    //     }
-    //     A.currentState = undefined;
-    //     drawScene();
-    //     await sleep(speedSlider.value / 4);
-    //     A.currentState = A.delta[save][A.alpha.get(a)];
-    //     save = A.currentState;
-    //     drawScene();
-    //     await sleep(speedSlider.value);
-    // }
-    // drawScene();
-    // await sleep(speedSlider.value / 2);
-    // var res = A.finalStates.has(A.indexToState[A.currentState]);
-    // if (res) { displayResult.innerHTML = "YES"; displayResult.style.color = "green"; }
-    // else { displayResult.innerHTML = "NO"; displayResult.style.color = "red"; }
-    // A.currentState = undefined;
-    // drawScene();
     var word = document.getElementById("word").value;
     if (typeof A == 'undefined') return;
     var st = [];
@@ -595,9 +570,6 @@ function determinize() {
     drawScene();
     return;
 }
-
-//todo check word in NFA (with animation)
-
 
 //check word in NFA
 
